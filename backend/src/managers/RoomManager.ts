@@ -24,22 +24,38 @@ export class RoomManager {
             roomId
         })
     }
-    onOffer(roomId: string, sdp: string) {
-        const user2 = this.rooms.get(roomId)?.user2;
-        user2?.socket.emit("offer", {
+    onOffer(roomId: string, sdp: string, senderSocketId: string) {
+        const room = this.rooms.get(roomId);
+        if (!room) {
+            return;
+        }
+        const reveivingUser = room.user1.socket.id === senderSocketId ? room.user2 : room.user1;  
+        reveivingUser?.socket.emit("offer", {
             sdp,
             roomId
         })
     }
     
-    onAnswer(roomId: string, sdp: string) {
-        const user1 = this.rooms.get(roomId)?.user1;
-        user1?.socket.emit("answer", {
+    onAnswer(roomId: string, sdp: string, senderSocketId: string) {
+        const room = this.rooms.get(roomId);
+        if (!room) {
+            return;
+        }
+        const reveivingUser = room.user1.socket.id === senderSocketId ? room.user2 : room.user1;  
+        reveivingUser?.socket.emit("answer", {
             sdp,
             roomId
         });
     }
 
+    onIceCandidate(roomId: string, senderSocketid: string, candidate:any, type:"sender" | "receiver") {
+        const room = this.rooms.get(roomId);
+        if (!room) {
+            return;
+        }
+        const receivingUser = room.user1.socket.id === senderSocketid ? room.user1 : room.user2;
+        receivingUser.socket.send("add-ice-candidate", ({candidate, type}));
+    }
     generate() {
         return GLOBAL_ROOM_ID++;
     }
