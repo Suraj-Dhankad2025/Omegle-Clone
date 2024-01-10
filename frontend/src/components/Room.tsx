@@ -1,34 +1,80 @@
-import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom"
 import { Socket, io } from "socket.io-client";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 
 const URL = 'http://localhost:3000';
-export const Room = () => {
+export const Room = ({
+  name,
+  localAudioTrack,
+  localVideoTrack
+}:{
+  name: string,
+  localAudioTrack: MediaStreamTrack,
+  localVideoTrack: MediaStreamTrack
+}) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const name = searchParams.get('name');
   const [lobby, setLobby] = useState(true);
   const [socket, setSocket] = useState<null | Socket>(null);
-  // const [connected, setConnected] = useState(false);
+  const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
+  const [receivingPc, setReceivingPc] = useState<null | RTCPeerConnection>(null);
+  const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null);
+  const [remoteAudioTrack, setRemoteAudioTrack] = useState<MediaStreamTrack | null>(null);
+
   useEffect(() => {
     const socket = io(URL);
-    socket.on('send-offer', ({ roomId }) => {
+    socket.on('send-offer', async ({roomId}) => {
       setLobby(false);
-      socket.emit('offer', { spd: "", roomId });
-    })
-    socket.on('offer', ({ roomId, offer }) => {
+      const pc = new RTCPeerConnection();
+      setSendingPc(pc);
+      pc.addTrack(localAudioTrack);
+      pc.addTrack(localVideoTrack);
+
+      pc.onicecandidate = async() => {
+        const sdp = await pc.createOffer();
+        socket.emit("offer", {
+          sdp,
+          roomId
+        })
+      }
+  });
+
+  socket.on("offer", async ({roomId, offer}) => {
       setLobby(false);
-      socket.emit('answer', { roomId, spd:""});
-    });
-     
-    socket.on('answer', ({ roomId, answer }) => {
+      const pc = new RTCPeerConnection();
+      pc.setRemoteDescription({sdp: offer, type: "offer"})
+      const sdp = await pc.createAnswer();
+      setReceivingPc(pc);
+      pc.ontrack = (({track, type}) => {
+          if (type == 'audio') {
+              setRemoteAudioTrack(track);
+          } else {
+              setRemoteVideoTrack(track);
+          }
+      })
+      socket.emit("answer", {
+          roomId,
+          sdp: sdp
+      });
+  });
+
+  socket.on("answer", ({roomId, answer}) => {
       setLobby(false);
-    });
-    socket.on('lobby', () => {
+      setSendingPc(pc => {
+          pc?.setRemoteDescription({
+              type: "answer",
+              sdp: answer
+          })
+          return pc;
+      })
+  })
+
+  socket.on("lobby", () => {
       setLobby(true);
-    });
-    setSocket(socket);
-  }, [name]);
+  })
+
+  setSocket(socket)
+}, [name])
 
   if(lobby) {
     return (
