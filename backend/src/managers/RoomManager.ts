@@ -54,7 +54,7 @@ export class RoomManager {
             return;
         }
         const receivingUser = room.user1.socket.id === senderSocketid ? room.user1 : room.user2;
-        receivingUser.socket.send("add-ice-candidate", ({candidate, type}));
+        receivingUser.socket.emit("add-ice-candidate", ({candidate, type}));
     }
     generate() {
         return GLOBAL_ROOM_ID++;

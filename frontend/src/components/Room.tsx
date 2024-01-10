@@ -39,7 +39,8 @@ export const Room = ({
         if (e.candidate) {
           socket.emit("add-ice-candidate", {
             candidate: e.candidate,
-            type: "sender"
+            type: "sender",
+            roomId
           });
         }
         pc.onnegotiationneeded = async () => {
@@ -70,7 +71,8 @@ export const Room = ({
         if (e.candidate) {
           socket.emit("add-ice-candidate", {
             candidate: e.candidate,
-            type: "receiver"
+            type: "receiver",
+            roomId 
           });
         }
         pc.ontrack = (({ track, type }) => {
@@ -110,7 +112,7 @@ export const Room = ({
           return pc;
         });
       } else {
-        setReceivingPc(pc => {
+        setSendingPc(pc => {
           pc?.addIceCandidate(candidate);
           return pc;
         });
