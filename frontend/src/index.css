@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*{
+    font-family: 'Poppins', sans-serif;
+}
+.bg{
+    background-color: gray;
+    background-image: url('tube-spinner.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100px;
+}
+.chatbg{
+    background-image: url('istockphoto-1403848173-612x612.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+}

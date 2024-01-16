@@ -199,10 +199,19 @@ export const Room = ({
         }
     }, [localVideoRef])
 
-    return <div>
-        Hi {name}
-        <video autoPlay width={400} height={400} ref={localVideoRef} />
-        {lobby ? "Waiting to connect you to someone" : null}
-        <video autoPlay width={400} height={400} ref={remoteVideoRef} />
+    return <div className="">
+        <div className="bg-gray-300 h-[420px] w-[1000px] flex justify-center items-center rounded-md space-x-3">
+        <div>
+        
+        <video className="  w-[30rem] h-[22.59rem] rounded-md border-white border-2 bg" autoPlay width={400} height={400} ref={remoteVideoRef} />
+        <h1 className="text-center">{lobby ? "Waiting to connect you to someone!" : null}</h1>
+        </div>
+        <div>
+        <video className="rounded-md border-white border-2 bg w-[30rem] h-[22.59rem]" autoPlay width={400} height={400} ref={localVideoRef} />
+        <h1 className="text-center">Hello! {name.charAt(0).toUpperCase() + name.slice(1)}</h1>
+        </div>
+        
+        </div>
+        
     </div>
 }
