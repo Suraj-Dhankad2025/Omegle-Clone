@@ -33,7 +33,11 @@ export class UserManager {
         this.users = this.users.filter(x => x.socket.id !== socketId);
         this.queue = this.queue.filter(x => x === socketId);
     }
-
+    getUsername(socketId: string): string | undefined {
+        const user = this.users.find(x => x.socket.id === socketId)?.name;
+        if(!user) return undefined;
+        return user;
+    }
     clearQueue() {
         console.log("inside clear queues")
         console.log(this.queue.length);

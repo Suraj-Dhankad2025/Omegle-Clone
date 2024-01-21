@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Socket, io } from "socket.io-client";
+import Footer from "./Footer";
+import { Chatbox } from "./Chatbox";
 
 const URL = "http://localhost:3000";
 
@@ -26,7 +28,7 @@ export const Room = ({
 
     useEffect(() => {
         const socket = io(URL);
-        socket.on('send-offer', async ({roomId}) => {
+        socket.on('send-offer', async ({ roomId }) => {
             console.log("sending offer");
             setLobby(false);
             const pc = new RTCPeerConnection();
@@ -46,11 +48,11 @@ export const Room = ({
             pc.onicecandidate = async (e) => {
                 console.log("receiving ice candidate locally");
                 if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "sender",
-                    roomId
-                   })
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "sender",
+                        roomId
+                    })
                 }
             }
 
@@ -66,7 +68,7 @@ export const Room = ({
             }
         });
 
-        socket.on("offer", async ({roomId, sdp: remoteSdp}) => {
+        socket.on("offer", async ({ roomId, sdp: remoteSdp }) => {
             console.log("received offer");
             setLobby(false);
             const pc = new RTCPeerConnection();
@@ -106,11 +108,11 @@ export const Room = ({
                 }
                 console.log("omn ice candidate on receiving seide");
                 if (e.candidate) {
-                   socket.emit("add-ice-candidate", {
-                    candidate: e.candidate,
-                    type: "receiver",
-                    roomId
-                   })
+                    socket.emit("add-ice-candidate", {
+                        candidate: e.candidate,
+                        type: "receiver",
+                        roomId
+                    })
                 }
             }
 
@@ -148,7 +150,7 @@ export const Room = ({
             }, 5000)
         });
 
-        socket.on("answer", ({roomId, sdp: remoteSdp}) => {
+        socket.on("answer", ({ roomId, sdp: remoteSdp }) => {
             setLobby(false);
             setSendingPc(pc => {
                 pc?.setRemoteDescription(remoteSdp)
@@ -161,9 +163,9 @@ export const Room = ({
             setLobby(true);
         })
 
-        socket.on("add-ice-candidate", ({candidate, type}) => {
+        socket.on("add-ice-candidate", ({ candidate, type }) => {
             console.log("add ice candidate from remote");
-            console.log({candidate, type})
+            console.log({ candidate, type })
             if (type == "sender") {
                 setReceivingPc(pc => {
                     if (!pc) {
@@ -199,19 +201,40 @@ export const Room = ({
         }
     }, [localVideoRef])
 
-    return <div className="">
-        <div className="bg-gray-300 h-[420px] w-[1000px] flex justify-center items-center rounded-md space-x-3">
-        <div>
-        
-        <video className="  w-[30rem] h-[22.59rem] rounded-md border-white border-2 bg" autoPlay width={400} height={400} ref={remoteVideoRef} />
-        <h1 className="text-center">{lobby ? "Waiting to connect you to someone!" : null}</h1>
-        </div>
-        <div>
-        <video className="rounded-md border-white border-2 bg w-[30rem] h-[22.59rem]" autoPlay width={400} height={400} ref={localVideoRef} />
-        <h1 className="text-center">Hello! {name.charAt(0).toUpperCase() + name.slice(1)}</h1>
-        </div>
-        
-        </div>
-        
-    </div>
+    return (
+        <>
+            <div className="h-[105vh] flex flex-row pl-8 pt-2  bg-slate-800">
+                <div className=" flex flex-col backdrop-blur-md">
+                    <div className="mb-4 flex flex-col items-start">
+                        <div className="mb-2">
+                            <video className="rounded-md border-gray-200 border-2 bg w-[30rem] h-[22.59rem]" autoPlay width={400} height={400} ref={remoteVideoRef} />
+                        </div>
+                        <div className="bg-slate-200 w-[480px] text-center">
+                            <h1 className="text-lg">{lobby ? "Waiting to connect you to someone!" : "Stranger"}</h1>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-start">
+                        <div className="mb-2">
+                            <video className="rounded-md border-gray-200 border-2 bg w-[30rem] h-[22.59rem]" autoPlay width={400} height={400} ref={localVideoRef} />
+                        </div>
+                        <div className="bg-slate-200 w-[480px] text-center">
+                            <h1 className="text-lg">Hello! {name.charAt(0).toUpperCase() + name.slice(1)}</h1>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <Chatbox socket={socket} username={name}/>
+                </div>
+            </div>
+            <button className="bg-slate-900 px-4 py-2 rounded-md text-white" onClick={() => {
+                if (socket) {
+                    socket.emit("lobby");
+                    setLobby(true);
+                }
+            }}>Leave</button>
+            <Footer />
+        </>
+
+    )
 }
