@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 import {UserManager} from "./managers/UserManger";
 
 const app = express();
-const server = http.createServer(http);
+const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
@@ -18,6 +18,11 @@ const usersManager = new UserManager();
 io.on('connection', (socket: Socket) => {
   console.log('a user connected');
   usersManager.addUser("randomName",socket);
+  
+  socket.on('chat-message', (message: string) => {
+    io.emit('chat-message', { id: socket.id, message });
+  });
+
   socket.on('disconnect', () => {
     usersManager.removeUser(socket.id);
   });

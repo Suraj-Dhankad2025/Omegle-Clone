@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRef } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { Socket, io } from "socket.io-client";
 import Footer from "./Footer";
@@ -23,13 +24,11 @@ export const Room = ({
     const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null);
     const [remoteAudioTrack, setRemoteAudioTrack] = useState<MediaStreamTrack | null>(null);
     const [remoteMediaStream, setRemoteMediaStream] = useState<MediaStream | null>(null);
-    const remoteVideoRef = useRef<HTMLVideoElement>();
     const localVideoRef = useRef<HTMLVideoElement>();
-
+    const remoteVideoRef = useRef<HTMLVideoElement>();
     useEffect(() => {
         const socket = io(URL);
         socket.on('send-offer', async ({ roomId }) => {
-            console.log("sending offer");
             setLobby(false);
             const pc = new RTCPeerConnection();
 
@@ -40,13 +39,11 @@ export const Room = ({
                 pc.addTrack(localVideoTrack)
             }
             if (localAudioTrack) {
-                console.error("added tack");
                 console.log(localAudioTrack)
                 pc.addTrack(localAudioTrack)
             }
 
             pc.onicecandidate = async (e) => {
-                console.log("receiving ice candidate locally");
                 if (e.candidate) {
                     socket.emit("add-ice-candidate", {
                         candidate: e.candidate,
@@ -55,9 +52,7 @@ export const Room = ({
                     })
                 }
             }
-
             pc.onnegotiationneeded = async () => {
-                console.log("on negotiation neeeded, sending offer");
                 const sdp = await pc.createOffer();
                 //@ts-ignore
                 pc.setLocalDescription(sdp)
@@ -67,9 +62,7 @@ export const Room = ({
                 })
             }
         });
-
         socket.on("offer", async ({ roomId, sdp: remoteSdp }) => {
-            console.log("received offer");
             setLobby(false);
             const pc = new RTCPeerConnection();
             pc.setRemoteDescription(remoteSdp)
@@ -85,28 +78,11 @@ export const Room = ({
             // trickle ice 
             setReceivingPc(pc);
             window.pcr = pc;
-            pc.ontrack = (e) => {
-                alert("ontrack");
-                // console.error("inside ontrack");
-                // const {track, type} = e;
-                // if (type == 'audio') {
-                //     // setRemoteAudioTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // } else {
-                //     // setRemoteVideoTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // }
-                // //@ts-ignore
-                // remoteVideoRef.current.play();
-            }
 
             pc.onicecandidate = async (e) => {
                 if (!e.candidate) {
                     return;
                 }
-                console.log("omn ice candidate on receiving seide");
                 if (e.candidate) {
                     socket.emit("add-ice-candidate", {
                         candidate: e.candidate,
@@ -123,7 +99,6 @@ export const Room = ({
             setTimeout(() => {
                 const track1 = pc.getTransceivers()[0].receiver.track
                 const track2 = pc.getTransceivers()[1].receiver.track
-                console.log(track1);
                 if (track1.kind === "video") {
                     setRemoteAudioTrack(track2)
                     setRemoteVideoTrack(track1)
@@ -137,16 +112,6 @@ export const Room = ({
                 remoteVideoRef.current.srcObject.addTrack(track2)
                 //@ts-ignore
                 remoteVideoRef.current.play();
-                // if (type == 'audio') {
-                //     // setRemoteAudioTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // } else {
-                //     // setRemoteVideoTrack(track);
-                //     // @ts-ignore
-                //     remoteVideoRef.current.srcObject.addTrack(track)
-                // }
-                // //@ts-ignore
             }, 5000)
         });
 
@@ -156,7 +121,6 @@ export const Room = ({
                 pc?.setRemoteDescription(remoteSdp)
                 return pc;
             });
-            console.log("loop closed");
         })
 
         socket.on("lobby", () => {
@@ -164,25 +128,13 @@ export const Room = ({
         })
 
         socket.on("add-ice-candidate", ({ candidate, type }) => {
-            console.log("add ice candidate from remote");
-            console.log({ candidate, type })
             if (type == "sender") {
                 setReceivingPc(pc => {
-                    if (!pc) {
-                        console.error("receicng pc nout found")
-                    } else {
-                        console.error(pc.ontrack)
-                    }
                     pc?.addIceCandidate(candidate)
                     return pc;
                 });
             } else {
                 setSendingPc(pc => {
-                    if (!pc) {
-                        console.error("sending pc nout found")
-                    } else {
-                        // console.error(pc.ontrack)
-                    }
                     pc?.addIceCandidate(candidate)
                     return pc;
                 });
@@ -199,7 +151,19 @@ export const Room = ({
                 localVideoRef.current.play();
             }
         }
-    }, [localVideoRef])
+    }, [localVideoRef]);
+
+    // document.addEventListener('keydown', function(event) {
+    //     if (event.key === 'Escape') {
+            
+    //         console.log('Escape key pressed!');
+    //     }
+    // });
+    const handleSubmit = (e:any) => {
+        e.preventDefault();
+        
+    }
+    
 
     return (
         <>
@@ -224,15 +188,10 @@ export const Room = ({
                 </div>
 
                 <div>
-                    <Chatbox socket={socket} username={name}/>
+                    <Chatbox username={name}/>
                 </div>
             </div>
-            <button className="bg-slate-900 px-4 py-2 rounded-md text-white" onClick={() => {
-                if (socket) {
-                    socket.emit("lobby");
-                    setLobby(true);
-                }
-            }}>Leave</button>
+            <button className="bg-slate-900 px-4 py-2 rounded-md text-white" onClick={handleSubmit}>Leave</button>
             <Footer />
         </>
 

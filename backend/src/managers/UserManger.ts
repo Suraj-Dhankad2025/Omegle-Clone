@@ -3,6 +3,7 @@ import { RoomManager } from "./RoomManager";
 
 export interface User {
     socket: Socket;
+    
     name: string;
 }
 
