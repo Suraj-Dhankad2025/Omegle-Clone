@@ -1,6 +1,6 @@
 // Chat.tsx
 import React, { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useSocket } from '../context/socketContext';
 interface Message {
   id: string;
   message: string;
@@ -10,12 +10,10 @@ interface ChatProps {
   username: string;
 }
 
-const socket: Socket = io('http://localhost:3000');
-
 const Chat: React.FC<ChatProps> = ({ username }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState('');
-
+  const socket:any = useSocket();
   const sendMessage = () => {
     socket.emit('chat-message', message);
     setMessage('');

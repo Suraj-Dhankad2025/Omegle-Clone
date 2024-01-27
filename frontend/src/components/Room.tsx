@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRef } from 'react';
 import { useSearchParams } from "react-router-dom";
-import { Socket, io } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import Footer from "./Footer";
 import { Chatbox } from "./Chatbox";
-
-const URL = "http://localhost:3000";
-
+import { useSocket } from '../context/socketContext';
 export const Room = ({
     name,
     localAudioTrack,
@@ -16,9 +14,10 @@ export const Room = ({
     localAudioTrack: MediaStreamTrack | null,
     localVideoTrack: MediaStreamTrack | null,
 }) => {
+    const socket = useSocket();
     const [searchParams, setSearchParams] = useSearchParams();
     const [lobby, setLobby] = useState(true);
-    const [socket, setSocket] = useState<null | Socket>(null);
+    const [newSocket, setnewSocket] = useState<null | Socket>(null);
     const [sendingPc, setSendingPc] = useState<null | RTCPeerConnection>(null);
     const [receivingPc, setReceivingPc] = useState<null | RTCPeerConnection>(null);
     const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null);
@@ -27,7 +26,6 @@ export const Room = ({
     const localVideoRef = useRef<HTMLVideoElement>();
     const remoteVideoRef = useRef<HTMLVideoElement>();
     useEffect(() => {
-        const socket = io(URL);
         socket.on('send-offer', async ({ roomId }) => {
             setLobby(false);
             const pc = new RTCPeerConnection();
@@ -141,7 +139,7 @@ export const Room = ({
             }
         })
 
-        setSocket(socket)
+        setnewSocket(socket)
     }, [name])
 
     useEffect(() => {
